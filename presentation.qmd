@@ -1,0 +1,177 @@
+---
+title: "Beyond Linear Thinking"
+subtitle: "The Limitations of Linear Models in Infectious Diseases"
+format: revealjs
+output: 
+  revealjs::revealjs_presentation:
+    theme: Dark
+    center: false
+    incremental: true
+    slideNumber: true
+    scroll: true
+    #width: 1920
+    #height: 1080
+    #controls: true
+    #progress: true
+    #history: true
+    #transition: 'slide'
+    #slideNumber: true
+    hash: true
+    separator: "^---"
+    verticalSeparator: "^--"
+editor: visual
+---
+
+```{r}
+#| echo: false
+ggplot2::theme_set(ggplot2::theme_minimal())
+```
+
+## Objective
+
+Despite their initial utility in statistical analysis, linear models often fall short when applied to complex dynamics such as in the case of infectious disease spread.
+
+We will discuss the inherent limitations of linear models in capturing the nonlinear nature of epidemics and propose more appropriate modeling techniques for epidemiological studies.
+
+## Background
+
+Linear models are a cornerstone in statistical analysis, valued for their simplicity and interpretability.
+
+$$
+y=\beta_0 + \beta_1 x
+$$
+
+## Limitations of Linear Models: {.smaller}
+
+❌  Constant rate of change between variables.
+
+The spread of infectious diseases is influenced by interconnected dynamics such as transmission rates, recovery rates, and population immunity. These elements introduce nonlinear interactions that a linear framework cannot adequately model.
+
+```{r}
+#| message: false
+#| warning: false
+#| echo: false
+library(tidyverse)
+cholera <- HistData::CholeraDeaths1849 %>%
+  filter(cause_of_death=="Cholera")%>%
+  select(date,deaths)
+```
+
+```{r}
+cholera %>%
+  filter(date >= "1849-06-01" & date <= "1849-08-01") %>%
+  ggplot(aes(x=date,y=deaths))+
+  geom_point()+
+  geom_smooth(method = "lm", se=F)+
+   labs(title="Deaths due to Cholera in London (June to August 1849)",
+        subtitle="Linear Model",
+       x="Date",y="N. deaths")
+```
+
+## Limitations of Linear Models: {.smaller}
+
+❌  Inadequacy in Complexity Handling
+
+Linear models fail to accommodate the threshold effects and saturation points critical in disease spread dynamics.
+
+```{r}
+#| echo: false
+#| message: false
+#| warning: false
+cholera %>%
+  ggplot(aes(x=date,y=deaths))+
+  geom_line()+
+   labs(title="Deaths due to Cholera in London (1849)",
+       x="Date",y="N. deaths")+
+  theme_minimal()
+```
+
+## Assumption of Linearity
+
+```{r}
+#| layout-ncol: 2
+#| message: false
+#| warning: false
+#| echo: false
+cholera %>%
+  filter(date >= "1849-06-01" & date <= "1849-08-01") %>%
+  ggplot(aes(x=date,y=deaths))+
+  geom_point()+
+  geom_smooth(method = "lm", se=F)+
+   labs(title="Deaths due to Cholera in London (June to August 1849)",
+        subtitle="Linear Model",
+       x="Date",y="N. deaths")
+
+cholera %>%
+  filter(date <= "1849-08-01") %>%
+  ggplot(aes(x=date,y=deaths))+
+  geom_point()+
+  geom_smooth(se=F)+
+   labs(title="Deaths due to Cholera in London (January to August 1849)",
+        subtitle = "method LOESS",
+       x="Date",y="N. deaths")
+```
+
+## Limitations of Linear Models: {.smaller}
+
+❌  Predictive Inaccuracy
+
+During an epidemic, the number of new cases does not increase or decrease linearly over time. Instead, outbreaks typically follow a logistic growth pattern, initially slow, then rapid, and finally plateauing as the susceptible population diminishes. Linear models, with their assumption of constant change, are ill-equipped to forecast such patterns.
+
+```{r}
+#| message: false
+#| warning: false
+#| echo: false
+#| fig-align: center
+
+ggplot(cholera,aes(x=date,y=deaths))+
+  geom_line(linetype="dashed",linewidth=0.2)+
+  geom_point(shape=21,stroke=0.5)+
+  geom_smooth(method = "lm",se=F)+
+  geom_smooth(method="gam", 
+              color="darkred",se=F)+
+  labs(title="Deaths due to Cholera in London (1849)",
+       x="Date",y="N. deaths")+
+  annotate(geom="text",
+           x=mean(cholera$date),y=-10,
+           label="linear")+
+  annotate("curve", 
+           x = mean(cholera$date)+20, 
+           xend = mean(cholera$date)+30, 
+           y = 0, yend = 120,
+           arrow=arrow(angle = 30, 
+                       length = unit(0.05, "inches"),
+                       ends = "last", type = "closed"),
+           colour = "blue")+
+    annotate(geom="text",
+           x=mean(cholera$date)-50,y=400,
+           label="gam (non-linear)")+
+  annotate("curve", 
+           x = mean(cholera$date)+20, 
+           xend = mean(cholera$date)-20, 
+           y = 400, yend = 500,
+           arrow=arrow(angle = 30, 
+                       length = unit(0.05, "inches"),
+                       ends = "first", type = "closed"),
+           colour = "darkred")
+```
+
+## Limitations of Linear Models: {.smaller}
+
+❌  Inflexibility in Model Adaptation
+
+Linear models do not readily adapt to the evolving nature of data during an epidemic, where the effects of interventions (like social distancing or vaccination) can dramatically alter disease dynamics.
+
+## Alternative Modeling Approaches:
+
+### Nonlinear Models
+
+Models like the logistic growth model and compartmental models (e.g., SIR and SEIR) are better suited for epidemiological studies as they inherently account for the changes in disease transmission dynamics over time.
+
+### Machine Learning Techniques
+
+Advanced analytics and machine learning offer the flexibility to learn from data in real-time, adjust predictions, and model complex nonlinear relationships without explicitly predefined model forms.
+
+## Conclusion
+
+The effective management of infectious diseases through public health policies relies heavily on accurate predictive modeling. As such, moving beyond linear models to more sophisticated approaches is a practical necessity.
